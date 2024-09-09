@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dados do Sensor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .sensor-value {
+            font-size: 2rem;
+            margin: 20px 0;
+        }
+
+        .status {
+            font-size: 1.2rem;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Leitura dos Sensores</h1>
+    
+    <div class="sensor-value" id="temp">Temperatura: Carregando...</div>
+    <div class="sensor-value" id="lum">Luminosidade: Carregando...</div>
+    <div class="sensor-value" id="umid">Umidade do solo: Carregando...</div>
+    
+
+    <script>
+        // Função para atualizar os dados dos sensores
+        function atualizarDados() {
+            fetch('/dados')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('temp').textContent = 'Temperatura: ' + data.temperatura;
+                    document.getElementById('lum').textContent = 'Luminosidade: ' + data.luminosidade;
+                    document.getElementById('umid').textContent = 'Umidade do solo: ' + data.umidade;
+                })
+                .catch(error => console.error('Erro ao buscar os dados:', error));
+        }
+
+        // Atualiza os dados a cada 5 segundos
+        setInterval(atualizarDados, 1000);
+    </script>
+
+</body>
+</html>
