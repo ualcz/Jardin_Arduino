@@ -1,4 +1,4 @@
-# Projeto de Monitoramento de Sensores com Flask e Arduino
+# Projeto de Jardin inteligente Arduino
 
 Este projeto é uma aplicação Flask faz conexão com um Arduino atravez da porta serial e exibe dados de sensores em uma página web. A aplicação mostra informações sobre temperatura, luminosidade e umidade do solo. Este projeto é parte de uma iniciação científica desenvolvida no IFBA - Campus Seabra.
 
