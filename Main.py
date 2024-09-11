@@ -1,68 +1,95 @@
-from flask import Flask, jsonify, render_template
-import serial
-import random
 import time
-import threading
+from pyfirmata import Arduino, util
 
-app = Flask(__name__)
+# Configuração da placa Arduino
+board = Arduino('COM3')
 
+# Definição dos pinos
+RELE_PIN = 9
+PINO_SENSOR = 'a:3:i'
+LDR = 'a:0:i'
+PIN_LM35 = 'a:2:i'
 
-dados_sensor = {"temperatura": 0, "luminosidade": 0, "umidade": 0}
-# Configurações da porta serial
-'''
-ser = serial.Serial('COM3', 9600, timeout=1)  # Substitua 'COM3' pela sua porta serial correta
+# Configuração do intervalo de rega
+INTERVALO_REGA = 5  # em segundos
+ultimo_tempo_rega = time.time()
 
-# Função para ler dados do Arduino
-def ler_dados_arduino():
-    global dados_sensor
-    while True:
-        if ser.in_waiting > 0:
-            linha = ser.readline().decode('utf-8').strip()
-            if "Temperatura" in linha:
-                try:
-                    valor_temp = int(linha.split(':')[1].strip())
-                    dados_sensor['temperatura'] = valor_temp
-                except:
-                    pass
-            elif "Luminosidade" in linha:
-                try:
-                    valor_lum = int(linha.split(':')[1].strip())
-                    dados_sensor['luminosidade'] = valor_lum
-                except:
-                    pass
-            elif "Umidade do solo" in linha:
-                try:
-                    valor_umid = int(linha.split(':')[1].strip())
-                    dados_sensor['umidade'] = valor_umid
-                except:
-                    pass
-'''
+# Definição da classe Planta
+class Planta:
+    def __init__(self, temp_min, temp_max, lum_min, lum_max, hum_min, hum_max):
+        self.limite_temp_min = temp_min
+        self.limite_temp_max = temp_max
+        self.limite_luminosidade_min = lum_min
+        self.limite_luminosidade_max = lum_max
+        self.limite_humidade_solo_min = hum_min
+        self.limite_humidade_solo_max = hum_max
 
-# Função para simular a geração de dados do "Arduino"
-def simular_dados_arduino():
-    global dados_sensor
-    while True:
-        # Gera valores aleatórios simulando as leituras dos sensores
-        dados_sensor['temperatura'] = random.randint(18, 35)  # Temperatura entre 18°C e 35°C
-        dados_sensor['luminosidade'] = random.randint(100, 1023)  # Luminosidade entre 100 e 1023
-        dados_sensor['umidade'] = random.randint(200, 800)  # Umidade entre 200 e 800
+    def condicoes_adequadas(self, temperatura, luminosidade, humidade):
+        return (self.limite_temp_min <= temperatura <= self.limite_temp_max and
+                self.limite_luminosidade_min <= luminosidade <= self.limite_luminosidade_max and
+                self.limite_humidade_solo_min <= humidade <= self.limite_humidade_solo_max)
 
-        # Imita o comportamento de atualização de dados a cada 5 segundos
-        time.sleep(1)
+# Definição das plantas
+plantas = [
+    Planta(0.0, 25.0, 100, 300, 200.2, 500.0),   # Planta que gosta de sombra
+    Planta(0.0, 28.0, 300, 600, 200.2, 900.0),   # Planta que gosta de luz moderada
+    Planta(0.0, 35.0, 600, 1023, 200.2, 500.0)   # Planta que gosta de luz intensa
+]
 
-# Thread para leitura contínua dos dados da serial
-thread = threading.Thread(target=simular_dados_arduino)
-#thread = threading.Thread(target=ler_dados_arduino)
-thread.daemon = True
-thread.start()
+# Seleção da planta
+planta_selecionada = plantas[0]  # Por padrão, selecionar a primeira planta
 
-@app.route('/')
-def index():
-    return render_template('index.html', dados=dados_sensor)
+# Função para ler a temperatura do sensor LM35
+def ler_temperatura():
+    leitura = board.analog[PIN_LM35].read()
+    if leitura is not None:
+        temperatura = leitura * 5 * 100  # Conversão para Celsius
+        return temperatura
+    return 0
 
-@app.route('/dados')
-def obter_dados():
-    return jsonify(dados_sensor)
+# Função para ler a luminosidade
+def ler_luminosidade():
+    leitura = board.analog[LDR].read()
+    if leitura is not None:
+        return leitura * 1023  # Conversão para valor de 0 a 1023
+    return 0
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+# Função para ler a umidade do solo
+def ler_umidade_solo():
+    leitura = board.analog[PINO_SENSOR].read()
+    if leitura is not None:
+        return leitura * 1023  # Conversão para valor de 0 a 1023
+    return 0
+
+# Função para exibir os valores no console
+def exibir_valores(temperatura, luminosidade, umidade):
+    print("================================")
+    print(f"Temperatura: {temperatura:.2f} °C")
+    print(f"Luminosidade: {luminosidade:.2f}")
+    print(f"Umidade do solo: {umidade:.2f}")
+    print("================================")
+
+# Loop principal
+while True:
+    temperatura = ler_temperatura()
+    luminosidade = ler_luminosidade()
+    umidade = ler_umidade_solo()
+
+    # Exibir valores a cada intervalo definido
+    tempo_atual = time.time()
+    if tempo_atual - ultimo_tempo_rega >= INTERVALO_REGA:
+        exibir_valores(temperatura, luminosidade, umidade)
+        ultimo_tempo_rega = tempo_atual
+
+    # Verificar as condições da planta selecionada
+    condicoes_adequadas = planta_selecionada.condicoes_adequadas(temperatura, luminosidade, umidade)
+
+    # Controlar a irrigação
+    if condicoes_adequadas:
+        board.digital[RELE_PIN].write(0)  # Liga a bomba de irrigação
+        print("Irrigação ativada.")
+    else:
+        board.digital[RELE_PIN].write(1)  # Desliga a bomba de irrigação
+        print("Irrigação desativada.")
+
+    time.sleep(5)  # Aguardar 5 segundos antes de repetir
