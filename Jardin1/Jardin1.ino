@@ -3,6 +3,7 @@
 //####################################################################################
 class Planta {
   public:
+  	String nomePlanta;
     float limiteTempMin;
     float limiteTempMax;
     int limiteLuminosidadeMin;
@@ -11,7 +12,8 @@ class Planta {
     float limiteHumidadeSoloMax;
 
     // Construtor
-    Planta(float tempMin, float tempMax, int lumMin, int lumMax, float humMin, float humMax) {
+    Planta( String nome, float tempMin, float tempMax, int lumMin, int lumMax, float humMin, float humMax) {
+      nomePlanta =nome;
       limiteTempMin = tempMin;
       limiteTempMax = tempMax;
       limiteLuminosidadeMin = lumMin;
@@ -26,15 +28,20 @@ class Planta {
               luminosidade >= limiteLuminosidadeMin && luminosidade <= limiteLuminosidadeMax &&
               humidade >= limiteHumidadeSoloMin && humidade <= limiteHumidadeSoloMax);
     }
+
+    String Exibinome(){
+
+      return  nomePlanta;
+    }
 };
 
 //####################################################################################
 // Definição das plantas (adicionar novas plantas aqui)
 //####################################################################################
 Planta plantas[] = {
-  Planta(0.0, 25.0, 100, 300, 200.2, 500.0),   // Planta que gosta de sombra
-  Planta(0.0, 28.0, 300, 600, 200.2, 900.0),   // Planta que gosta de luz moderada
-  Planta(0.0, 35.0, 600, 1023, 200.2, 500.0)   // Planta que gosta de luz intensa
+  Planta("gosta de sombra",0.0, 25.0, 100, 300, 200.2, 500.0),   // Planta que gosta de sombra
+  Planta("gosta de luz moderada",0.0, 28.0, 300, 600, 200.2, 900.0),   // Planta que gosta de luz moderada
+  Planta("gosta de luz intensa",0.0, 35.0, 600, 1023, 200.2, 500.0)   // Planta que gosta de luz intensa
 };
 
 Planta plantaSelecionada = plantas[0];  // Planta selecionada
@@ -68,7 +75,7 @@ void setup() {
   for (int i = 0; i < sizeof(plantas) / sizeof(plantas[0]); i++) {
     Serial.print(i + 1);
     Serial.print(" - Planta ");
-    Serial.print(i + 1);
+    Serial.print(plantaSelecionada.Exibinome());
     Serial.println();
   }
 
@@ -79,6 +86,7 @@ void setup() {
     plantaSelecionada = plantas[tipoPlanta];
     Serial.print("Planta ");
     Serial.print(tipoPlanta + 1);
+    Serial.print(plantaSelecionada.Exibinome());
     Serial.println(" selecionada.");
   } else {
     Serial.println("Seleção inválida. Planta 1 será usada por padrão.");
@@ -117,9 +125,10 @@ void loop() {
 
 // Funções para leitura dos sensores
 float lerTemperatura() {
-  float leitura = (float(analogRead(pinLM35))*5/(1023))/0.01;
-  float temp = leitura;  // Simulação de conversão de temperatura
-  return temp;
+  int reading = analogRead(pinLM35); 
+  float voltage = reading * 5.0 / 1024.0;  
+  float tempC = (voltage - 0.5) * 100;
+  return tempC;
 }
 
 int lerLuminosidade() {

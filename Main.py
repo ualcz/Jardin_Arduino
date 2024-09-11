@@ -16,7 +16,8 @@ ultimo_tempo_rega = time.time()
 
 # Definição da classe Planta
 class Planta:
-    def __init__(self, temp_min, temp_max, lum_min, lum_max, hum_min, hum_max):
+    def __init__(self, nome:str, temp_min:float, temp_max:float, lum_min:int, lum_max:int, hum_min:float, hum_max:float):
+        self.nome=nome
         self.limite_temp_min = temp_min
         self.limite_temp_max = temp_max
         self.limite_luminosidade_min = lum_min
@@ -31,9 +32,9 @@ class Planta:
 
 # Definição das plantas
 plantas = [
-    Planta(0.0, 25.0, 100, 300, 200.2, 500.0),   # Planta que gosta de sombra
-    Planta(0.0, 28.0, 300, 600, 200.2, 900.0),   # Planta que gosta de luz moderada
-    Planta(0.0, 35.0, 600, 1023, 200.2, 500.0)   # Planta que gosta de luz intensa
+    Planta('gosta de sombra',0.0, 25.0, 100, 300, 200.2, 500.0),   # Planta que gosta de sombra
+    Planta('gosta de luz moderada',0.0, 28.0, 300, 600, 200.2, 900.0),   # Planta que gosta de luz moderada
+    Planta(' gosta de luz intensa',0.0, 35.0, 600, 1023, 200.2, 500.0)   # Planta que gosta de luz intensa
 ]
 
 # Seleção da planta
