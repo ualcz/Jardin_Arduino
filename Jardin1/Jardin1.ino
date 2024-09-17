@@ -62,7 +62,7 @@ Planta plantas[] = {
 Planta plantaSelecionada = plantas[0];  // Inicialmente seleciona a primeira planta
 
 //####################################################################################
-// Definição dos pinos e variáveis globais
+// Definição dos pinos, variáveis globais e import de bliblioteacas
 //####################################################################################
 #include <Wire.h>
 #include "ClosedCube_HDC1080.h"
